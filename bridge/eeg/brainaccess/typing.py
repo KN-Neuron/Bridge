@@ -1,0 +1,1 @@
+Cap = dict[int, str]

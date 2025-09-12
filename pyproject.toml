@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = [
+  "bridge"
+]
+
+[project]
+name = "neuron-bridge"
+version = "0.1.0"
+authors = [
+    { name = "mateusz-kow", email = "kowalski.mateusz.1lo1@gmail.com" },
+]
+description = "A versatile bridge application and SDK for connecting with EEG devices."
+readme = "README.md"
+requires-python = "~=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy<2.0.0",
+]
+
+[project.optional-dependencies]
+server = [
+    "websockets~=12.0",
+]
+dev = [
+    "websockets~=12.0",
+    "pandas",
+    "mne~=1.6.0",
+    "matplotlib",
+    "black",
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "mypy",
+    "hatch",
+    "twine",
+    "pre-commit",
+]
+
+[project.urls]
+Homepage = "https://github.com/mateusz-kow/bridge"
+Issues = "https://github.com/mateusz-kow/bridge/issues"
+
+[project.scripts]
+bridge-server = "server.cli:run_server_cli"
+
+[tool.ruff]
+line-length = 120
+lint.select = ["E", "F", "W", "I", "C90"]
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+explicit_package_bases = true
+namespace_packages = true
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/"]
