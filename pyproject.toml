@@ -9,13 +9,13 @@ packages = [
 
 [project]
 name = "neuron-bridge"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name = "mateusz-kow", email = "kowalski.mateusz.1lo1@gmail.com" },
 ]
 description = "A versatile bridge application and SDK for connecting with EEG devices."
 readme = "README.md"
-requires-python = "~=3.11"
+requires-python = ">=3.11.0, <3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -46,7 +46,7 @@ dev = [
     "mypy~=1.18.1",
     "hatchling~=1.27.0",
     "twine~=6.2.0",
-    "pre-commit~-4.2.0",
+    "pre-commit~=4.2.0",
 ]
 
 [project.urls]
