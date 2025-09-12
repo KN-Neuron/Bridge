@@ -9,13 +9,13 @@ packages = [
 
 [project]
 name = "neuron-bridge"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name = "mateusz-kow", email = "kowalski.mateusz.1lo1@gmail.com" },
 ]
 description = "A versatile bridge application and SDK for connecting with EEG devices."
 readme = "README.md"
-requires-python = "~=3.11"
+requires-python = ">=3.11.0, <3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy<2.0.0",
+    "numpy~=1.26.4",
 ]
 
 [project.optional-dependencies]
@@ -35,23 +35,23 @@ server = [
 ]
 dev = [
     "websockets~=12.0",
-    "pandas",
-    "mne~=1.6.0",
-    "matplotlib",
-    "black",
-    "ruff",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-mock",
-    "mypy",
-    "hatch",
-    "twine",
-    "pre-commit",
+    "pandas~=2.3.2",
+    "mne~=1.6.1",
+    "matplotlib~=3.10.6",
+    "black~=25.1.0",
+    "ruff~=0.13.0",
+    "pytest~=8.4.2",
+    "pytest-asyncio~=1.2.0",
+    "pytest-mock~=3.15.0",
+    "mypy~=1.18.1",
+    "hatchling~=1.27.0",
+    "twine~=6.2.0",
+    "pre-commit~=4.2.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/mateusz-kow/bridge"
-Issues = "https://github.com/mateusz-kow/bridge/issues"
+Homepage = "https://github.com/KN-Neuron/Bridge"
+Issues = "https://github.com/KN-Neuron/Bridge/issues"
 
 [project.scripts]
 bridge-server = "server.cli:run_server_cli"
