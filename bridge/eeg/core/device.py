@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger, getLogger
 from types import TracebackType
+from typing import Generator
 
 from .device_data import DeviceData
 from .typing import EEGArray
@@ -26,6 +27,9 @@ class EEGDevice(ABC):
     def get_impedance(self, duration: float) -> list[float]:
         raise NotImplementedError(f"Impedance measurement not implemented for this class {self.__class__.__name__}.")
 
+    def stream(self) -> Generator[EEGArray, None, None]:
+        raise NotImplementedError(f"Streaming not implemented for this class {self.__class__.__name__}.")
+
     @abstractmethod
     def get_device_data(self) -> DeviceData | None:
         pass
@@ -43,4 +47,3 @@ class EEGDevice(ABC):
     ) -> None:
         self._logger.debug("Exiting context manager...")
         self.disconnect()
-        return None
