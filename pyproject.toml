@@ -9,7 +9,7 @@ packages = [
 
 [project]
 name = "neuron-bridge"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     { name = "mateusz-kow", email = "kowalski.mateusz.1lo1@gmail.com" },
 ]
