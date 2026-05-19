@@ -1,7 +1,11 @@
 import multiprocessing
 import time
 from logging import Logger, getLogger
+from queue import Empty, Queue
+from typing import Generator
 
+import brainaccess.core.eeg_channel as eeg_channel
+import numpy as np
 from brainaccess import core
 from brainaccess.core.eeg_manager import EEGManager
 from brainaccess.utils import acquisition
@@ -14,6 +18,7 @@ from .config import (
     DATA_COLLECTION_TIME,
     DEFAULT_BLUETOOTH_ADAPTER,
     DEFAULT_DEVICE_PORT,
+    GAIN_MODE,
     IMPEDANCE_MEASUREMENT_TIME,
 )
 
@@ -27,6 +32,8 @@ class BrainaccessDevice(EEGDevice):
         self._cap: dict[int, str] | None = None
         self._mac_address: str | None = None
         self._device_name: str | None = None
+        self._stream_queue: Queue[EEGArray] = Queue()
+        self._is_streaming: bool = False
 
         super().__init__(logger or getLogger(__name__))
 
@@ -49,6 +56,15 @@ class BrainaccessDevice(EEGDevice):
             raise
 
         self._logger.info("Connection successful.")
+
+    def _acq_callback(self, chunk: list[float], chunk_size: int) -> None:
+        """Wewnętrzny callback wywoływany przez BrainAccess SDK."""
+        if self._is_streaming:
+            chunk_array = np.array(chunk)
+            num_channels = len(self._electrodes)
+            eeg_chunk = chunk_array[:num_channels, :].astype(np.float64)
+
+            self._stream_queue.put(eeg_chunk)
 
     # IM-032
     def _get_device_model(self, port: int) -> str:
@@ -98,17 +114,24 @@ class BrainaccessDevice(EEGDevice):
                 model = self._get_device_model(port)
                 self._cap = get_cap_from_model(model)
 
+            self._electrodes = list(self._cap.values())
+
             try:
                 self._connect(self._device_name, self._cap)
                 return
             except Exception as e:
-                self._logger.exception(e)
+                if self._manager:
+                    self._manager.__exit__(None, None, None)
+                self._logger.exception(f"Connection failed: {e}")
+                raise
 
     # IM-032
     def disconnect(self) -> None:
         self._ensure_connected()
+        self._is_streaming = False
         self._logger.debug("Disconnecting the device...")
         if self._manager:
+            self._manager.stop_stream()
             self._manager.disconnect()
             self._manager.__exit__(None, None, None)
             # self._manager.destroy()
@@ -116,6 +139,45 @@ class BrainaccessDevice(EEGDevice):
         self._eeg.close()
 
         self._logger.info("Device disconnected successfully.")
+
+    def stream(self) -> Generator[EEGArray, None, None]:
+        """
+        Generator strumieniujący dane EEG w czasie rzeczywistym.
+        Użycie:
+            for chunk in device.stream():
+                process(chunk)
+        """
+        self._ensure_connected()
+        assert self._manager is not None
+
+        while not self._stream_queue.empty():
+            self._stream_queue.get()
+
+        num_channels = len(self._electrodes)
+        for i in range(num_channels):
+            self._manager.set_channel_enabled(eeg_channel.ELECTRODE_MEASUREMENT + i, True)
+            self._manager.set_channel_gain(eeg_channel.ELECTRODE_MEASUREMENT + i, GAIN_MODE)
+            self._manager.set_channel_bias(eeg_channel.ELECTRODE_MEASUREMENT + i, True)
+
+        self._manager.set_channel_enabled(eeg_channel.STREAMING, True)
+        self._manager.set_callback_chunk(self._acq_callback)
+
+        self._is_streaming = True
+        self._manager.start_stream()
+        self._logger.info("Started real-time stream.")
+
+        try:
+            while self._is_streaming:
+                try:
+                    chunk = self._stream_queue.get(timeout=1.0)
+                    yield chunk
+                except Empty:
+                    continue
+        finally:
+            self._is_streaming = False
+            if self._manager:
+                self._manager.stop_stream()
+            self._logger.info("Stopped real-time stream.")
 
     # IM-032
     def get_impedance(self, duration: float = IMPEDANCE_MEASUREMENT_TIME) -> list[float]:
