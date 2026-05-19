@@ -31,7 +31,7 @@ class EEGDevice(ABC):
         raise NotImplementedError(f"Streaming not implemented for this class {self.__class__.__name__}.")
 
     @abstractmethod
-    def get_device_data(self) -> DeviceData | None:
+    def get_device_data(self) -> DeviceData:
         pass
 
     def __enter__(self) -> "EEGDevice":

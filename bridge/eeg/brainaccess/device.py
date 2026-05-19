@@ -153,16 +153,12 @@ class BrainaccessDevice(EEGDevice):
         self._logger.info("Data acquisition completed.")
         return raw_data  # type: ignore[no-any-return]
 
-    def get_device_data(self) -> DeviceData | None:
+    def get_device_data(self) -> DeviceData:
         self._ensure_connected()
-        try:
-            return DeviceData(
-                name=self._device_name,
-                mac_address=self._mac_address,
-                manufacturer=BRAINACCESS_MANUFACTURER,
-                electrodes_num=len(self._cap) if self._cap else None,
-                sample_rate=self._manager.get_sample_frequency() if self._manager else None,
-            )
-        except Exception as e:
-            self._logger.exception(f"Failed to fetch device data for device {self.__class__.__name__}: {e}")
-            return None
+        return DeviceData(
+            name=self._device_name,
+            mac_address=self._mac_address,
+            manufacturer=BRAINACCESS_MANUFACTURER,
+            electrodes_num=len(self._cap) if self._cap else None,
+            sample_rate=self._manager.get_sample_frequency() if self._manager else None,
+        )
