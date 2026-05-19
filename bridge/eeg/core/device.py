@@ -20,9 +20,8 @@ class EEGDevice(ABC):
     def disconnect(self) -> None:
         pass
 
-    @abstractmethod
     def get_output(self, duration: float, output_file: str | None = None) -> EEGArray:
-        pass
+        raise NotImplementedError(f"Output retrieval not implemented for this class {self.__class__.__name__}.")
 
     def get_impedance(self, duration: float) -> list[float]:
         raise NotImplementedError(f"Impedance measurement not implemented for this class {self.__class__.__name__}.")
