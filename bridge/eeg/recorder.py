@@ -12,21 +12,31 @@ from .core.device_data import RecordingFrame
 class EEGRecorder:
     """Rejestrator EEG wykorzystujący wysokowydajny format binarny NumPy."""
 
-    def __init__(self, device: EEGDevice, filename: str, logger: Logger | None = None, autosave: bool = True) -> None:
+    def __init__(
+        self,
+        device: EEGDevice,
+        filename: str,
+        logger: Logger | None = None,
+        autosave: bool = True,
+        connect_device: bool = True,
+    ) -> None:
         self._logger: Final[Logger] = logger or getLogger(__name__)
         self._device: Final[EEGDevice] = device
         self._filename: Final[str] = filename
         self._autosave: Final[bool] = autosave
+        self._connect_device: Final[bool] = connect_device
         self._frames: list[RecordingFrame] = []
 
     def __enter__(self) -> "EEGRecorder":
-        self._device.connect()
+        if self._connect_device:
+            self._device.connect()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._autosave:
             self.save()
-        self._device.disconnect()
+        if self._connect_device:
+            self._device.disconnect()
 
     def stream(self) -> Generator[EEGArray, None, None]:
         """Strumieniuje dane i buforuje je w pamięci jako RecordingFrame."""
@@ -46,7 +56,7 @@ class EEGRecorder:
             file_path: Final[Path] = output_dir / self._filename
 
             timestamps: Final[np.ndarray] = np.array([f.timestamp for f in self._frames])
-            data_blocks: Final[np.ndarray] = np.array([f.data for f in self._frames])
+            data_blocks: Final[np.ndarray] = np.concatenate([f.data for f in self._frames], axis=1)
 
             np.savez_compressed(file_path, timestamps=timestamps, data=data_blocks)
 

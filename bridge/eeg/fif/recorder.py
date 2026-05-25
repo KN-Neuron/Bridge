@@ -20,6 +20,7 @@ class FifRecorder:
         sfreq: float = 250.0,
         logger: Logger | None = None,
         autosave: bool = True,
+        connect_device: bool = True,
     ) -> None:
         try:
             import mne  # noqa: F401
@@ -32,16 +33,19 @@ class FifRecorder:
         self._cap: Final[dict[int, str]] = cap
         self._sfreq: Final[float] = sfreq
         self._autosave: Final[bool] = autosave
+        self._connect_device: Final[bool] = connect_device
         self._frames: list[RecordingFrame] = []
 
     def __enter__(self) -> "FifRecorder":
-        self._device.connect()
+        if self._connect_device:
+            self._device.connect()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._autosave:
             self.save()
-        self._device.disconnect()
+        if self._connect_device:
+            self._device.disconnect()
 
     def stream(self) -> Generator[EEGArray, None, None]:
         for chunk in self._device.stream():

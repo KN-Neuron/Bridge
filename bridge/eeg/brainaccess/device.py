@@ -50,7 +50,6 @@ class BrainaccessDevice(EEGDevice):
         try:
             self._eeg.setup(self._manager, device_name=device_name, cap=cap)
             self._electrodes = list(cap.values())
-            self._logger.info("Connection successful.")
         except Exception:
             self._manager.__exit__(None, None, None)
             raise
@@ -133,10 +132,12 @@ class BrainaccessDevice(EEGDevice):
         self._is_streaming = False
         self._logger.debug("Disconnecting the device...")
         if self._manager:
-            self._manager.stop_stream()
+            try:
+                self._manager.stop_stream()
+            except Exception:
+                pass
             self._manager.disconnect()
             self._manager.__exit__(None, None, None)
-            # self._manager.destroy()
             self._manager = None
         self._eeg.close()
 
@@ -177,8 +178,6 @@ class BrainaccessDevice(EEGDevice):
                     continue
         finally:
             self._is_streaming = False
-            if self._manager:
-                self._manager.stop_stream()
             self._logger.info("Stopped real-time stream.")
 
     # IM-032

@@ -1,13 +1,11 @@
 import time
 
-from bridge.eeg import EEGConnector, close, init
+from bridge.eeg import EEGConnector
 from bridge.eeg.brainaccess import get_cap_from_model
 from bridge.eeg.fif import FifRecorder
 
 
 def record_session_fif() -> None:
-    init()
-
     try:
         with EEGConnector() as connector:
             device = connector._eeg_device
@@ -19,7 +17,7 @@ def record_session_fif() -> None:
 
             cap = get_cap_from_model("MAXI")
 
-            with FifRecorder(device, filename="my_brain_data.fif", cap=cap, sfreq=250.0) as recorder:
+            with FifRecorder(device, filename="my_brain_data.fif", cap=cap, sfreq=250.0, connect_device=False) as recorder:
                 print("Rozpoczynam zbieranie danych (10 sekund)...")
 
                 start_time = time.time()
@@ -33,8 +31,6 @@ def record_session_fif() -> None:
 
     except Exception as e:
         print(f"Wystąpił błąd: {e}")
-    finally:
-        close()
 
 
 if __name__ == "__main__":
