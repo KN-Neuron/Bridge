@@ -11,7 +11,6 @@ from ..core.device_data import RecordingFrame
 
 
 class FifRecorder:
-    """Records an EEG stream and saves it as an MNE FIF file."""
 
     def __init__(
         self,
