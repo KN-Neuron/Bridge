@@ -33,6 +33,9 @@ dependencies = [
 server = [
     "websockets~=12.0",
 ]
+fif = [
+    "mne~=1.6.1",
+]
 dev = [
     "websockets~=12.0",
     "pandas~=2.3.2",

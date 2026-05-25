@@ -26,7 +26,7 @@ class FileDevice(EEGDevice):
             self._data = loader["data"]
 
         self._is_connected = True
-        if not self._data:
+        if self._data is None or self._data.size == 0:
             raise ValueError(f"No data found in file: {self._path}")
 
         self._logger.info("FileDevice connected. Loaded %d blocks.", len(self._data))
