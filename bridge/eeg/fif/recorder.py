@@ -11,7 +11,6 @@ from ..core.device_data import RecordingFrame
 
 
 class FifRecorder:
-
     def __init__(
         self,
         device: EEGDevice,

@@ -18,7 +18,6 @@ _SFREQ = 250.0
 
 
 class _FakeDevice(EEGDevice):
-
     def __init__(self, n_chunks: int = 8) -> None:
         super().__init__()
         self._n = n_chunks
@@ -45,9 +44,11 @@ def _record(tmp_path: Path, n_chunks: int = 8) -> Path:
     dev.connect()
     rec = FifRecorder(dev, str(fif_path), cap=_CAP, sfreq=_SFREQ)
     chunks = []
+
     def _run():
         for c in rec.stream():
             chunks.append(c)
+
     t = threading.Thread(target=_run, daemon=True)
     t.start()
     time.sleep(0.5)
@@ -101,8 +102,10 @@ def test_fif_roundtrip_data_matches(tmp_path):
     rng = np.random.default_rng(42)
     original = rng.standard_normal((_N_CH, _CHUNK * 4))
 
-    import mne
     import warnings
+
+    import mne
+
     info = mne.create_info(list(_CAP.values()), sfreq=_SFREQ, ch_types="eeg")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)

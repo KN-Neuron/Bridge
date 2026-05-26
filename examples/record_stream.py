@@ -5,7 +5,6 @@ from bridge.eeg.recorder import EEGRecorder
 
 
 def record_session() -> None:
-
     try:
         # 1. Używamy Connectora, aby automatycznie znalazł urządzenie
         with EEGConnector() as connector:

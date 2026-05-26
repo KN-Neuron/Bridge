@@ -17,7 +17,9 @@ def record_session_fif() -> None:
 
             cap = get_cap_from_model("MAXI")
 
-            with FifRecorder(device, filename="my_brain_data.fif", cap=cap, sfreq=250.0, connect_device=False) as recorder:
+            with FifRecorder(
+                device, filename="my_brain_data.fif", cap=cap, sfreq=250.0, connect_device=False
+            ) as recorder:
                 print("Rozpoczynam zbieranie danych (10 sekund)...")
 
                 start_time = time.time()

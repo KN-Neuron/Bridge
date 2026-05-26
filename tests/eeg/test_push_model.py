@@ -1,15 +1,12 @@
-import threading
 import time
 
 import numpy as np
-import pytest
 
 from bridge.eeg.core import EEGDevice
 from bridge.eeg.core.device_data import DeviceData
 
 
 class _StubDevice(EEGDevice):
-
     def __init__(self, n_chunks: int = 5, chunk_shape: tuple = (4, 10)) -> None:
         super().__init__()
         self._n_chunks = n_chunks

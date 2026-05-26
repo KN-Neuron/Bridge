@@ -8,6 +8,7 @@ __all__ = [
 
 try:
     from .device import BrainaccessDevice
+
     __all__ = [*__all__, "BrainaccessDevice"]
 except ImportError:
     pass
