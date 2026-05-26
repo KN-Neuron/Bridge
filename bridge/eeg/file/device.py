@@ -11,10 +11,13 @@ from ..core import DeviceData, EEGArray, EEGDevice
 class FileDevice(EEGDevice):
     """Emulator odtwarzający sesje z plików binarnych .npz."""
 
-    def __init__(self, file_path: str, sfreq: float = 250.0, logger: Logger | None = None) -> None:
+    def __init__(
+        self, file_path: str, sfreq: float = 250.0, chunk_size: int = 25, logger: Logger | None = None
+    ) -> None:
         super().__init__(logger or getLogger(__name__))
         self._path: Final[Path] = Path(file_path)
         self._sfreq: Final[float] = sfreq
+        self._chunk_size: Final[int] = chunk_size
         self._data: np.ndarray | None = None
         self._is_connected: bool = False
 
@@ -29,7 +32,7 @@ class FileDevice(EEGDevice):
         if self._data is None or self._data.size == 0:
             raise ValueError(f"No data found in file: {self._path}")
 
-        self._logger.info("FileDevice connected. Loaded %d blocks.", len(self._data))
+        self._logger.info("FileDevice connected. Data shape: %s", self._data.shape)
 
     def disconnect(self) -> None:
         self._is_connected = False
@@ -38,23 +41,21 @@ class FileDevice(EEGDevice):
         if not self._is_connected or self._data is None:
             raise RuntimeError("FileDevice not connected.")
 
-        chunk_size: Final[int] = self._data.shape[2]
-        interval: Final[float] = chunk_size / self._sfreq
-
+        n_samples = self._data.shape[1]
+        interval: Final[float] = self._chunk_size / self._sfreq
         start_perf: Final[float] = time.perf_counter()
 
-        for count, chunk in enumerate(self._data, start=1):
+        for count, start in enumerate(range(0, n_samples - self._chunk_size + 1, self._chunk_size), start=1):
             if not self._is_connected:
                 break
 
             target: float = start_perf + (count * interval)
-
             while time.perf_counter() < target:
                 diff = target - time.perf_counter()
                 if diff > 0.002:
                     time.sleep(diff - 0.001)
 
-            yield chunk
+            yield self._data[:, start : start + self._chunk_size].astype(np.float64)
 
     def get_device_data(self) -> DeviceData:
         return DeviceData(name=self._path.name, manufacturer="BinarySim", sample_rate=int(self._sfreq))

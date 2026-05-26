@@ -10,7 +10,6 @@ from ..core import DeviceData, EEGArray, EEGDevice
 
 
 class FifDevice(EEGDevice):
-
     def __init__(self, file_path: str, chunk_size: int = 25, logger: Logger | None = None) -> None:
         try:
             import mne  # noqa: F401
@@ -36,7 +35,9 @@ class FifDevice(EEGDevice):
         self._sfreq = float(raw.info["sfreq"])
         self._data = raw.get_data()
         self._is_connected = True
-        self._logger.info("FifDevice connected: %d ch × %d samples @ %.0f Hz", *self._data.shape, self._sfreq)
+        if self._data is not None:
+            data: np.ndarray = self._data
+            self._logger.info("FifDevice connected: %d ch × %d samples @ %.0f Hz", *data.shape, self._sfreq)
 
     def disconnect(self) -> None:
         self._is_connected = False

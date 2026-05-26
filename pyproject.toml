@@ -35,6 +35,7 @@ server = [
 ]
 fif = [
     "mne~=1.6.1",
+    "scipy<1.15.0"
 ]
 dev = [
     "websockets~=12.0",
