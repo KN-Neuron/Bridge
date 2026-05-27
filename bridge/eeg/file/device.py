@@ -1,7 +1,7 @@
 import time
 from logging import Logger, getLogger
 from pathlib import Path
-from typing import Final, Generator
+from typing import Any, Final, Generator
 
 import numpy as np
 
@@ -18,7 +18,7 @@ class FileDevice(EEGDevice):
         self._path: Final[Path] = Path(file_path)
         self._sfreq: Final[float] = sfreq
         self._chunk_size: Final[int] = chunk_size
-        self._data: np.ndarray | None = None
+        self._data: np.ndarray[Any, Any] | None = None
         self._is_connected: bool = False
 
     def connect(self) -> None:

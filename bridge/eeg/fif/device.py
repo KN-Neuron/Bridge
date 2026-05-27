@@ -2,7 +2,7 @@ import time
 import warnings
 from logging import Logger, getLogger
 from pathlib import Path
-from typing import Final, Generator
+from typing import Any, Final, Generator
 
 import numpy as np
 
@@ -19,7 +19,7 @@ class FifDevice(EEGDevice):
         super().__init__(logger or getLogger(__name__))
         self._path: Final[Path] = Path(file_path)
         self._chunk_size: Final[int] = chunk_size
-        self._data: np.ndarray | None = None
+        self._data: np.ndarray[Any, Any] | None = None
         self._sfreq: float = 250.0
         self._is_connected: bool = False
 
@@ -36,7 +36,7 @@ class FifDevice(EEGDevice):
         self._data = raw.get_data()
         self._is_connected = True
         if self._data is not None:
-            data: np.ndarray = self._data
+            data: np.ndarray[Any, Any] = self._data
             self._logger.info("FifDevice connected: %d ch × %d samples @ %.0f Hz", *data.shape, self._sfreq)
 
     def disconnect(self) -> None:

@@ -55,8 +55,8 @@ class EEGRecorder:
             output_dir.mkdir(exist_ok=True)
             file_path: Final[Path] = output_dir / self._filename
 
-            timestamps: Final[np.ndarray] = np.array([f.timestamp for f in self._frames])
-            data_blocks: Final[np.ndarray] = np.concatenate([f.data for f in self._frames], axis=1)
+            timestamps: Final[np.ndarray[Any, Any]] = np.array([f.timestamp for f in self._frames])
+            data_blocks: Final[np.ndarray[Any, Any]] = np.concatenate([f.data for f in self._frames], axis=1)
 
             np.savez_compressed(file_path, timestamps=timestamps, data=data_blocks)
 
