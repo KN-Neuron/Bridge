@@ -1,33 +1,41 @@
 import time
+import warnings
 from logging import Logger, getLogger
 from pathlib import Path
 from typing import Any, Final, Generator
 
 import numpy as np
 
-from .core import EEGArray, EEGDevice
-from .core.device_data import RecordingFrame
+from ..core import EEGArray, EEGDevice
+from ..core.device_data import RecordingFrame
 
 
-class EEGRecorder:
-    """Rejestrator EEG wykorzystujący wysokowydajny format binarny NumPy."""
-
+class FifRecorder:
     def __init__(
         self,
         device: EEGDevice,
         filename: str,
+        cap: dict[int, str],
+        sfreq: float = 250.0,
         logger: Logger | None = None,
         autosave: bool = True,
         connect_device: bool = True,
     ) -> None:
+        try:
+            import mne  # noqa: F401
+        except ImportError as e:
+            raise ImportError("FIF support requires mne: pip install 'neuron-bridge[fif]'") from e
+
         self._logger: Final[Logger] = logger or getLogger(__name__)
         self._device: Final[EEGDevice] = device
         self._filename: Final[str] = filename
+        self._cap: Final[dict[int, str]] = cap
+        self._sfreq: Final[float] = sfreq
         self._autosave: Final[bool] = autosave
         self._connect_device: Final[bool] = connect_device
         self._frames: list[RecordingFrame] = []
 
-    def __enter__(self) -> "EEGRecorder":
+    def __enter__(self) -> "FifRecorder":
         if self._connect_device:
             self._device.connect()
         return self
@@ -39,13 +47,13 @@ class EEGRecorder:
             self._device.disconnect()
 
     def stream(self) -> Generator[EEGArray, None, None]:
-        """Strumieniuje dane i buforuje je w pamięci jako RecordingFrame."""
         for chunk in self._device.stream():
             self._frames.append(RecordingFrame(timestamp=time.time(), data=chunk))
             yield chunk
 
     def save(self) -> None:
-        """Zapisuje dane do skompresowanego pliku binarnego NumPy (.npz)."""
+        import mne
+
         if not self._frames:
             self._logger.warning("No data to save.")
             return
@@ -55,13 +63,15 @@ class EEGRecorder:
             output_dir.mkdir(exist_ok=True)
             file_path: Final[Path] = output_dir / self._filename
 
-            timestamps: Final[np.ndarray[Any, Any]] = np.array([f.timestamp for f in self._frames])
-            data_blocks: Final[np.ndarray[Any, Any]] = np.concatenate([f.data for f in self._frames], axis=1)
+            data = np.concatenate([f.data for f in self._frames], axis=1)
+            ch_names = [self._cap[i] for i in sorted(self._cap)]
+            info = mne.create_info(ch_names=ch_names, sfreq=self._sfreq, ch_types="eeg")
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                mne.io.RawArray(data, info, verbose=False).save(str(file_path), overwrite=True, verbose=False)
 
-            np.savez_compressed(file_path, timestamps=timestamps, data=data_blocks)
-
-            self._logger.info("Saved session to binary file: %s", file_path)
+            self._logger.info("Saved session to FIF: %s", file_path)
 
         except (OSError, IOError) as e:
-            self._logger.error("Failed to save recording to disk: %s", e)
+            self._logger.error("Failed to save FIF recording: %s", e)
             raise

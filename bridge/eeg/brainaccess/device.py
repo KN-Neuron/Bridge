@@ -50,7 +50,6 @@ class BrainaccessDevice(EEGDevice):
         try:
             self._eeg.setup(self._manager, device_name=device_name, cap=cap)
             self._electrodes = list(cap.values())
-            self._logger.info("Connection successful.")
         except Exception:
             self._manager.__exit__(None, None, None)
             raise
@@ -94,8 +93,10 @@ class BrainaccessDevice(EEGDevice):
 
         with connection_lock:
             self._logger.debug("Scanning for eeg...")
-            core.scan(adapter_index=bluetooth_adapter)
-            count = core.get_device_count()
+            if bluetooth_adapter != 0:
+                core.config_set_adapter_index(bluetooth_adapter)
+            devices = core.scan()
+            count = len(devices)
             self._logger.info(f"Found {count} eeg.")
 
             if count == 0:
@@ -106,8 +107,8 @@ class BrainaccessDevice(EEGDevice):
             if port >= count:
                 raise ConnectionError(f"Can't connect on port {port}, found {count} eeg.")
 
-            self._device_name = core.get_device_name(port) or "Unknown Device"
-            self._mac_address = core.get_device_address(port)
+            self._device_name = devices[port].name or "Unknown Device"
+            self._mac_address = devices[port].mac_address
             self._cap = get_cap_from_name(self._device_name)
 
             if not self._cap:
@@ -131,10 +132,12 @@ class BrainaccessDevice(EEGDevice):
         self._is_streaming = False
         self._logger.debug("Disconnecting the device...")
         if self._manager:
-            self._manager.stop_stream()
+            try:
+                self._manager.stop_stream()
+            except Exception:
+                pass
             self._manager.disconnect()
             self._manager.__exit__(None, None, None)
-            # self._manager.destroy()
             self._manager = None
         self._eeg.close()
 
@@ -175,8 +178,6 @@ class BrainaccessDevice(EEGDevice):
                     continue
         finally:
             self._is_streaming = False
-            if self._manager:
-                self._manager.stop_stream()
             self._logger.info("Stopped real-time stream.")
 
     # IM-032

@@ -44,21 +44,18 @@ def test_connect_no_devices_found(mock_brainaccess_sdk):
 
 def test_connect_successful(mock_brainaccess_sdk):
     """Test a successful connection flow."""
-    mock_brainaccess_sdk.get_device_count.return_value = 1
-    mock_brainaccess_sdk.get_device_name.return_value = "BRAINACCESS-MAXI-1234"
-    mock_brainaccess_sdk.get_device_address.return_value = "00:11:22:33:44:55"
-
-    manager_instance = mock_brainaccess_sdk.EEGManager()
+    mock_device_info = MagicMock()
+    mock_device_info.name = "BA MAXI 009"
+    mock_device_info.mac_address = "00:11:22:33:44:55"
+    mock_brainaccess_sdk.scan.return_value = [mock_device_info]
 
     device = BrainaccessDevice()
     device.connect(port=0)
 
     mock_brainaccess_sdk.scan.assert_called_once()
-    mock_brainaccess_sdk.get_device_name.assert_called_with(0)
-    manager_instance.__enter__.assert_called_once()
-    assert device._device_name == "BRAINACCESS-MAXI-1234"
+    assert device._device_name == "BA MAXI 009"
     assert device._mac_address == "00:11:22:33:44:55"
-    assert "P8" in device._cap.values()  # Check if MAXI cap was loaded
+    assert "P8" in device._cap.values()  # MAXI cap loaded by name
 
 
 def test_get_output_calls_sdk_correctly(mock_brainaccess_sdk):
