@@ -18,9 +18,11 @@ def playback_session() -> None:
 
             print("Rozpoczynam odtwarzanie strumienia...")
 
-            # 3. Ta pętla działa identycznie jak przy prawdziwym czepku
-            # FileDevice sam zadba o odpowiednie odstępy czasowe (timing), żeby symulować 250Hz.
+            # 3. Ta pętla działa identycznie jak przy prawdziwym czepku!
+            # FileDevice sam zadba o odpowiednie odstępy czasowe (timing),
+            # żeby symulować 250Hz.
             for i, chunk in enumerate(device.stream()):
+                # Tutaj możesz wstawić swoją logikę analizy/procesowania
                 avg_signal = chunk.mean()
                 print(f"Ramka {i:03} | Średnie napięcie: {avg_signal:.2f} uV")
 
