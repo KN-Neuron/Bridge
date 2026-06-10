@@ -9,6 +9,30 @@ from .core import EEGArray, EEGDevice
 from .core.device_data import RecordingFrame
 
 
+def save_recording(
+    data: np.ndarray,
+    path: str | Path,
+    sfreq: float | None = None,
+    ch_names: list[str] | None = None,
+    logger: Logger | None = None,
+) -> None:
+    _log = logger or getLogger(__name__)
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    arrays: dict[str, Any] = {
+        "timestamps": np.array([time.time()]),
+        "data": data,
+    }
+    if sfreq is not None:
+        arrays["sfreq"] = np.float64(sfreq)
+    if ch_names is not None:
+        arrays["ch_names"] = np.array(ch_names, dtype=str)
+
+    np.savez_compressed(dest, **arrays)
+    _log.info("Saved recording to %s", dest)
+
+
 class EEGRecorder:
     """Rejestrator EEG wykorzystujący wysokowydajny format binarny NumPy."""
 
@@ -16,6 +40,9 @@ class EEGRecorder:
         self,
         device: EEGDevice,
         filename: str,
+        output_dir: str | Path = "recordings",
+        sfreq: float | None = None,
+        ch_names: list[str] | None = None,
         logger: Logger | None = None,
         autosave: bool = True,
         connect_device: bool = True,
@@ -23,6 +50,9 @@ class EEGRecorder:
         self._logger: Final[Logger] = logger or getLogger(__name__)
         self._device: Final[EEGDevice] = device
         self._filename: Final[str] = filename
+        self._output_dir: Final[Path] = Path(output_dir)
+        self._sfreq: float | None = sfreq
+        self._ch_names: list[str] | None = ch_names
         self._autosave: Final[bool] = autosave
         self._connect_device: Final[bool] = connect_device
         self._frames: list[RecordingFrame] = []
@@ -51,14 +81,19 @@ class EEGRecorder:
             return
 
         try:
-            output_dir: Final[Path] = Path("recordings")
-            output_dir.mkdir(exist_ok=True)
-            file_path: Final[Path] = output_dir / self._filename
+            self._output_dir.mkdir(parents=True, exist_ok=True)
+            file_path: Final[Path] = self._output_dir / self._filename
 
             timestamps: Final[np.ndarray[Any, Any]] = np.array([f.timestamp for f in self._frames])
             data_blocks: Final[np.ndarray[Any, Any]] = np.concatenate([f.data for f in self._frames], axis=1)
 
-            np.savez_compressed(file_path, timestamps=timestamps, data=data_blocks)
+            arrays: dict[str, Any] = {"timestamps": timestamps, "data": data_blocks}
+            if self._sfreq is not None:
+                arrays["sfreq"] = np.float64(self._sfreq)
+            if self._ch_names is not None:
+                arrays["ch_names"] = np.array(self._ch_names, dtype=str)
+
+            np.savez_compressed(file_path, **arrays)
 
             self._logger.info("Saved session to binary file: %s", file_path)
 

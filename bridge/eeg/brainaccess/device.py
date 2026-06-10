@@ -26,7 +26,7 @@ connection_lock = multiprocessing.Lock()
 
 
 class BrainaccessDevice(EEGDevice):
-    def __init__(self, logger: Logger | None = None) -> None:
+    def __init__(self, scale: float = 1.0, logger: Logger | None = None) -> None:
         self._eeg: EEG = acquisition.EEG()
         self._manager: EEGManager | None = None
         self._cap: dict[int, str] | None = None
@@ -34,6 +34,7 @@ class BrainaccessDevice(EEGDevice):
         self._device_name: str | None = None
         self._stream_queue: Queue[EEGArray] = Queue()
         self._is_streaming: bool = False
+        self._scale: float = scale
 
         super().__init__(logger or getLogger(__name__))
 
@@ -173,7 +174,7 @@ class BrainaccessDevice(EEGDevice):
             while self._is_streaming:
                 try:
                     chunk = self._stream_queue.get(timeout=1.0)
-                    yield chunk
+                    yield chunk * self._scale if self._scale != 1.0 else chunk
                 except Empty:
                     continue
         finally:
@@ -224,4 +225,5 @@ class BrainaccessDevice(EEGDevice):
             manufacturer=BRAINACCESS_MANUFACTURER,
             electrodes_num=len(self._cap) if self._cap else None,
             sample_rate=self._manager.get_sample_frequency() if self._manager else None,
+            channel_names=tuple(self._cap.values()) if self._cap else None,
         )

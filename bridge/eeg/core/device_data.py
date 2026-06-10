@@ -10,6 +10,7 @@ class DeviceData:
     manufacturer: str | None = None
     electrodes_num: int | None = None
     sample_rate: int | None = None
+    channel_names: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

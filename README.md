@@ -57,6 +57,7 @@ try:
     with EEGConnector() as device:
         info = device.get_device_data()
         print(f"Połączono z: {info.name}")
+        print(f"Kanały: {info.channel_names}")
 
         # Akwizycja 5 sekund danych
         eeg_data = device.get_output(duration=5.0)
@@ -69,6 +70,59 @@ finally:
     # Zwolnienie zasobów
     close()
 ```
+
+### BrainAccess — skalowanie jednostek
+
+SDK BrainAccess zwraca surowe wartości ADC. Parametr `scale` pozwala przeliczać je na µV bezpośrednio przy streamowaniu:
+
+```python
+from bridge.eeg.brainaccess import BrainaccessDevice
+
+device = BrainaccessDevice(scale=1 / 1000)  # ADC → µV
+device.connect()
+for chunk in device.stream():
+    # chunk jest już w µV
+    ...
+device.disconnect()
+```
+
+### Nagrywanie i odtwarzanie
+
+**Nagrywanie live** z urządzenia:
+
+```python
+from bridge.eeg.recorder import EEGRecorder
+from bridge.eeg.brainaccess import BrainaccessDevice
+
+device = BrainaccessDevice(scale=1 / 1000)
+with EEGRecorder(device, filename="session.npz", sfreq=250, ch_names=["C3", "C4", "Cz"]) as rec:
+    for chunk in rec.stream():
+        pass  # dane są buforowane i zapisywane automatycznie przy wyjściu
+```
+
+**Zapis gotowych danych** (gdy pętla streamowania jest zarządzana ręcznie):
+
+```python
+from bridge.eeg.recorder import save_recording
+import numpy as np
+
+data: np.ndarray  # (n_channels, n_samples)
+save_recording(data, path="session.npz", sfreq=250, ch_names=["C3", "C4", "Cz"])
+```
+
+**Odtwarzanie** nagrania zamiast prawdziwego urządzenia:
+
+```python
+from bridge.eeg.file.device import FileDevice
+
+device = FileDevice("session.npz")
+device.connect()
+for chunk in device.stream():
+    ...  # identyczne API jak z live urządzeniem
+device.disconnect()
+```
+
+Pliki `.npz` zapisane przez `EEGRecorder` i `save_recording` są w pełni wymienne z `FileDevice`.
 
 ## Rozwój Projektu
 
