@@ -16,9 +16,10 @@ class FileDevice(EEGDevice):
     ) -> None:
         super().__init__(logger or getLogger(__name__))
         self._path: Final[Path] = Path(file_path)
-        self._sfreq: Final[float] = sfreq
+        self._sfreq: float = sfreq
         self._chunk_size: Final[int] = chunk_size
         self._data: np.ndarray[Any, Any] | None = None
+        self._ch_names: tuple[str, ...] | None = None
         self._is_connected: bool = False
 
     def connect(self) -> None:
@@ -27,6 +28,10 @@ class FileDevice(EEGDevice):
 
         with np.load(self._path) as loader:
             self._data = loader["data"]
+            if "sfreq" in loader:
+                self._sfreq = float(loader["sfreq"])
+            if "ch_names" in loader:
+                self._ch_names = tuple(str(n) for n in loader["ch_names"])
 
         self._is_connected = True
         if self._data is None or self._data.size == 0:
@@ -58,4 +63,11 @@ class FileDevice(EEGDevice):
             yield self._data[:, start : start + self._chunk_size].astype(np.float64)
 
     def get_device_data(self) -> DeviceData:
-        return DeviceData(name=self._path.name, manufacturer="BinarySim", sample_rate=int(self._sfreq))
+        n_ch = self._data.shape[0] if self._data is not None else None
+        return DeviceData(
+            name=self._path.name,
+            manufacturer="BinarySim",
+            sample_rate=int(self._sfreq),
+            electrodes_num=n_ch,
+            channel_names=self._ch_names,
+        )
