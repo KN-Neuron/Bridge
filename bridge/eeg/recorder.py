@@ -10,7 +10,7 @@ from .core.device_data import RecordingFrame
 
 
 def save_recording(
-    data: np.ndarray,
+    data: np.ndarray[Any, Any],
     path: str | Path,
     sfreq: float | None = None,
     ch_names: list[str] | None = None,
